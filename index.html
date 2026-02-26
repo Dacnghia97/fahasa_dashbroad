@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Game Dashboard - Report</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --card-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 260px;
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            transition: var(--transition);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.8rem 1rem;
+            text-decoration: none;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-link.active,
+        .nav-link:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+            max-width: 1600px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            background: var(--bg-card);
+            padding: 1rem;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        input[type="date"],
+        button,
+        select {
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-body);
+            color: var(--text-main);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Chart Section */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .chart-wrapper {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .chart-header {
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            aside {
+                width: 80px;
+                padding: 2rem 0.5rem;
+            }
+
+            .logo span,
+            .nav-link span {
+                display: none;
+            }
+
+            main {
+                margin-left: 80px;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            aside {
+                display: none;
+            }
+
+            main {
+                margin-left: 0;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Color variants for icons */
+        .bg-blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .bg-green {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .bg-purple {
+            background: rgba(168, 85, 247, 0.1);
+            color: #a855f7;
+        }
+
+        .bg-orange {
+            background: rgba(249, 115, 22, 0.1);
+            color: #f97316;
+        }
+
+        .bg-red {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .bg-indigo {
+            background: rgba(79, 70, 229, 0.1);
+            color: #4f46e5;
+        }
+
+        /* Notification Styling */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            background: var(--bg-card);
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            border-radius: 4px;
+            transform: translateY(100px);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+        }
+
+        #toast.show {
+            transform: translateY(0);
+        }
+
+        /* Tabs Handling */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* User Table Styling */
+        .table-container {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            background-color: rgba(0, 0, 0, 0.02);
+            white-space: nowrap;
+        }
+
+        .user-table td {
+            white-space: nowrap;
+        }
+
+        [data-theme="dark"] .user-table th {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .user-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .user-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .user-table tbody tr:hover {
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+
+        .user-search {
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-body);
+            color: var(--text-main);
+            outline: none;
+            transition: var(--transition);
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">Thông báo</div>
+
+    <!-- Sidebar -->
+    <aside>
+        <div class="logo">
+            <i class="fas fa-gamepad"></i>
+            <span>GameDash</span>
+        </div>
+        <nav>
+            <a href="#" class="nav-link active" onclick="switchTab('tab-thong-ke', this)">
+                <i class="fas fa-chart-line"></i>
+                <span>Thống kê</span>
+            </a>
+            <a href="#" class="nav-link" onclick="switchTab('tab-nguoi-dung', this)">
+                <i class="fas fa-users"></i>
+                <span>Người dùng</span>
+            </a>
+            <a href="#" class="nav-link" onclick="switchTab('tab-qua-tang', this)">
+                <i class="fas fa-gift"></i>
+                <span>Quà tặng</span>
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-cog"></i>
+                <span>Cài đặt</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+        <header>
+            <div class="header-title">
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Chào mừng trở lại,</p>
+                <h1>Báo cáo Mini Game</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-outline" onclick="initDashboard()" title="Làm mới dữ liệu">
+                    <i class="fas fa-sync-alt"></i> Tải lại
+                </button>
+                <button class="btn-outline" onclick="toggleTheme()" title="Chuyển chế độ Sáng/Tối">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Filters & Actions -->
+        <section class="controls">
+            <div class="filter-group">
+                <label>Từ ngày:</label>
+                <input type="date" id="date-from">
+            </div>
+            <div class="filter-group">
+                <label>Đến ngày:</label>
+                <input type="date" id="date-to">
+            </div>
+            <button class="btn-primary" onclick="initDashboard()">
+                <i class="fas fa-sync-alt"></i> Lọc dữ liệu
+            </button>
+            <button class="btn-outline" onclick="exportCSV()">
+                <i class="fas fa-file-export"></i> Xuất CSV
+            </button>
+        </section>
+
+        <div id="tab-thong-ke" class="tab-content active">
+            <!-- Stats Cards -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon bg-blue"><i class="fas fa-ticket-alt"></i></div>
+                    <p class="stat-label">Tổng mã đã phát</p>
+                    <p class="stat-value" id="total-codes">0</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon bg-green"><i class="fas fa-play-circle"></i></div>
+                    <p class="stat-label">Tổng lượt chơi</p>
+                    <p class="stat-value" id="total-plays">0</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon bg-purple"><i class="fas fa-user-friends"></i></div>
+                    <p class="stat-label">Tổng người tham gia</p>
+                    <p class="stat-value" id="total-participants">0</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon bg-orange"><i class="fas fa-user-clock"></i></div>
+                    <p class="stat-label">Chưa chơi</p>
+                    <p class="stat-value" id="total-not-played">0</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon bg-red"><i class="fas fa-trophy"></i></div>
+                    <p class="stat-label">Lượt trúng</p>
+                    <p class="stat-value" id="total-wins">0</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon bg-indigo"><i class="fas fa-percentage"></i></div>
+                    <p class="stat-label">Tỷ lệ chơi</p>
+                    <p class="stat-value" id="play-rate">0%</p>
+                </div>
+            </section>
+
+            <!-- Additional Stats (Extra Metrics) -->
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                <div class="stat-card">
+                    <div class="stat-label">Tỷ lệ trúng</div>
+                    <p class="stat-value" id="win-rate">0%</p>
+                    <small style="color: var(--text-secondary)">(trên tổng lượt PLAYER)</small>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Tổng lượt hết hạn</div>
+                    <p class="stat-value" id="total-expired">0</p>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <section class="charts-container">
+                <div class="chart-wrapper">
+                    <div class="chart-header">Phân bổ Trạng thái</div>
+                    <canvas id="statusPieChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <div class="chart-header">Tỷ lệ Trúng vs Không Trúng</div>
+                    <canvas id="winBarChart"></canvas>
+                </div>
+                <div class="chart-wrapper full-width">
+                    <div class="chart-header">Số lượt chơi theo ngày</div>
+                    <canvas id="activityLineChart"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <div id="tab-nguoi-dung" class="tab-content">
+            <div class="table-container">
+                <input type="text" id="user-search" class="user-search" placeholder="Tìm kiếm SĐT, Họ tên, Mã ĐH..."
+                    onkeyup="renderUserTable()">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Họ và Tên</th>
+                            <th>Số điện thoại</th>
+                            <th>Email</th>
+                            <th>Mã đơn hàng</th>
+                            <th>Ngày tham gia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-qua-tang" class="tab-content">
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.2rem; font-weight: 600;">Tổng quan Quà tặng</h2>
+            <div class="stats-grid" id="gift-stats-grid"
+                style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+                <!-- Cards injected by JS -->
+            </div>
+
+            <div class="table-container" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Danh sách người trúng thưởng</h3>
+                <input type="text" id="gift-search" class="user-search" placeholder="Tìm kiếm SĐT, Họ tên, Quà tặng..."
+                    onkeyup="renderGiftData()">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Họ và Tên</th>
+                            <th>Số điện thoại</th>
+                            <th>Quà tặng</th>
+                            <th>Thời gian trúng</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gift-table-body">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * CONFIGURATION
+         */
+        const API_URL = "https://nocodb.smax.in/api/v2/tables/mkuczx2ud6zitcr/records?offset=0&limit=1000&viewId=vwwpbk3nxxbb38yc";
+        const API_TOKEN = "9XcWdwwaxAznbxKwmx-wcwQI81K9vC3JD7GtK0ot";
+        let rawData = [];
+        let filteredData = [];
+        let charts = {};
+
+        /**
+         * INITIALIZATION
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            initDashboard();
+        });
+
+        async function initDashboard() {
+            showLoading(true);
+            try {
+                const data = await fetchData();
+                rawData = data || [];
+                applyFilters();
+                updateDashboardUI();
+                showToast("Dữ liệu đã được cập nhật!");
+            } catch (error) {
+                console.error("Dashboard Init Error:", error);
+                showToast("Lỗi khi tải dữ liệu. Vui lòng thử lại.", true);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        /**
+         * DATA FETCHINg
+         */
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL, {
+                    headers: { 'xc-token': API_TOKEN }
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                const result = await response.json();
+
+                // Loại bỏ các bản ghi trống, chỉ thống kê từ ID có dữ liệu cơ bản đầy đủ
+                return result.list.filter(item => item.phone && item.status && item.random_code);
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        /**
+         * FILTERING & CALCULATIONS
+         */
+        function applyFilters() {
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+
+            filteredData = rawData.filter(item => {
+                const createdAt = item.CreatedAt || item.created_at || item['Created time'];
+                const itemDate = new Date(createdAt).setHours(0, 0, 0, 0);
+                let pass = true;
+                if (dateFrom) pass = pass && itemDate >= new Date(dateFrom).setHours(0, 0, 0, 0);
+                if (dateTo) pass = pass && itemDate <= new Date(dateTo).setHours(0, 0, 0, 0);
+                return pass;
+            });
+        }
+
+        function calculateMetrics() {
+            const totalCodes = filteredData.length;
+            const playerRecords = filteredData.filter(i => i.status === "PLAYER");
+            const expiredRecords = filteredData.filter(i => i.status === "EXPIRED");
+
+            // Logic: Tổng người tham gia = Số phone unique có ít nhất 1 PLAYER
+            const uniquePhonesPlayer = [...new Set(playerRecords.map(i => i.phone))];
+
+            // Logic: Người nhận mã nhưng chưa chơi = Phone không có bất kỳ record nào status = PLAYER
+            // We need to look at all phones in our filtered set
+            const allPhones = [...new Set(filteredData.map(i => i.phone))];
+            const uniquePhonesNoPlayer = allPhones.filter(phone => {
+                return !filteredData.some(i => i.phone === phone && i.status === "PLAYER");
+            });
+
+            const totalWins = playerRecords.filter(i => i.prize_id && i.prize_id !== 'null').length;
+
+            const playRate = totalCodes > 0 ? (playerRecords.length / totalCodes) * 100 : 0;
+            const winRate = playerRecords.length > 0 ? (totalWins / playerRecords.length) * 100 : 0;
+
+            return {
+                totalCodes,
+                totalPlays: playerRecords.length,
+                totalParticipants: uniquePhonesPlayer.length,
+                notPlayedCount: uniquePhonesNoPlayer.length,
+                totalWins,
+                totalExpired: expiredRecords.length,
+                playRate: playRate.toFixed(1),
+                winRate: winRate.toFixed(1)
+            };
+        }
+
+        /**
+         * UI RENDERING
+         */
+        function updateDashboardUI() {
+            const metrics = calculateMetrics();
+
+            document.getElementById('total-codes').innerText = metrics.totalCodes;
+            document.getElementById('total-plays').innerText = metrics.totalPlays;
+            document.getElementById('total-participants').innerText = metrics.totalParticipants;
+            document.getElementById('total-not-played').innerText = metrics.notPlayedCount;
+            document.getElementById('total-wins').innerText = metrics.totalWins;
+            document.getElementById('total-expired').innerText = metrics.totalExpired;
+            document.getElementById('play-rate').innerText = metrics.playRate + '%';
+            document.getElementById('win-rate').innerText = metrics.winRate + '%';
+
+            renderCharts();
+            renderUserTable();
+            renderGiftData();
+        }
+
+        const GIFT_CONFIG = {
+            "5.000 F-point": { total: 1500, icon: "fa-coins", bg: "bg-orange", match: ["5.000", "5000"] },
+            "10.000 F-point": { total: 500, icon: "fa-money-bill-wave", bg: "bg-blue", match: ["10.000", "10000"] },
+            "200.000 F-point": { total: 20, icon: "fa-gem", bg: "bg-purple", match: ["200.000", "200000"] },
+            "Máy Tính Casio FX580": { total: 6, icon: "fa-calculator", bg: "bg-indigo", match: ["casio", "máy tính"] }
+        };
+
+        function renderGiftData() {
+            const giftStats = {
+                "5.000 F-point": 0,
+                "10.000 F-point": 0,
+                "200.000 F-point": 0,
+                "Máy Tính Casio FX580": 0
+            };
+
+            const winners = filteredData.filter(i => {
+                if (!i.prize || i.prize === 'null' || typeof i.prize !== 'string') return false;
+
+                const prizeLower = i.prize.toLowerCase();
+                let matched = false;
+
+                for (const [key, config] of Object.entries(GIFT_CONFIG)) {
+                    const isMatch = config.match.some(m => prizeLower.includes(m.toLowerCase()));
+                    if (isMatch) {
+                        i.normalized_prize = key;
+                        matched = true;
+                        break;
+                    }
+                }
+                return matched;
+            });
+
+            winners.forEach(i => {
+                if (i.normalized_prize) giftStats[i.normalized_prize]++;
+            });
+
+            const statsContainer = document.getElementById('gift-stats-grid');
+            statsContainer.innerHTML = '';
+
+            for (const [key, config] of Object.entries(GIFT_CONFIG)) {
+                const received = giftStats[key];
+                const remain = config.total - received;
+
+                statsContainer.innerHTML += `
+                <div class="stat-card">
+                    <div class="stat-icon ${config.bg}"><i class="fas ${config.icon}"></i></div>
+                    <p class="stat-label" style="font-weight: 600; font-size: 1rem; color: var(--text-main); margin-bottom: 0;">${key}</p>
+                    <div style="display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.9rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="flex: 1; text-align: center;">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px;">Tổng</div>
+                            <strong style="font-size: 1.1rem;">${config.total}</strong>
+                        </div>
+                        <div style="flex: 1; text-align: center; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px;">Đã nhận</div>
+                            <strong style="color: #22c55e; font-size: 1.1rem;">${received}</strong>
+                        </div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="color: var(--text-secondary); margin-bottom: 4px;">Còn lại</div>
+                            <strong style="color: ${remain > 0 ? '#4f46e5' : '#ef4444'}; font-size: 1.1rem;">${Math.max(0, remain)}</strong>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            const tableBody = document.getElementById('gift-table-body');
+            const searchInput = document.getElementById('gift-search').value.toLowerCase();
+
+            let displayWinners = [...winners];
+            if (searchInput) {
+                displayWinners = displayWinners.filter(i => {
+                    const name = (i.name || '').toLowerCase();
+                    const phone = (i.phone || '').toLowerCase();
+                    const prize = (i.normalized_prize || i.prize || '').toLowerCase();
+                    return name.includes(searchInput) || phone.includes(searchInput) || prize.includes(searchInput);
+                });
+            }
+
+            displayWinners.sort((a, b) => {
+                const dateA = new Date(a.CreatedAt || a.created_at || a['Created time'] || 0);
+                const dateB = new Date(b.CreatedAt || b.created_at || b['Created time'] || 0);
+                return dateB - dateA;
+            });
+
+            tableBody.innerHTML = '';
+            if (displayWinners.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">Không tìm thấy dữ liệu trúng thưởng</td></tr>';
+                return;
+            }
+
+            displayWinners.forEach((user, index) => {
+                const rowCreatedAt = user.CreatedAt || user.created_at || user['Created time'];
+                const timeString = new Date(rowCreatedAt).toLocaleString('vi-VN');
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td style="font-weight: 500">${user.name || '-'}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td style="color: var(--primary-color); font-weight: 500;">${user.normalized_prize || user.prize || '-'}</td>
+                    <td>${timeString}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function renderUserTable() {
+            const tableBody = document.getElementById('user-table-body');
+            const searchInput = document.getElementById('user-search').value.toLowerCase();
+
+            tableBody.innerHTML = '';
+
+            // Lọc ra danh sách những người trạng thái PLAYER (đã chơi) hoặc có nhập thông tin phone
+            let usersData = filteredData.filter(i => i.phone);
+
+            // Xử lý bộ lọc tìm kiếm nhanh
+            if (searchInput) {
+                usersData = usersData.filter(i => {
+                    const name = (i.name || '').toLowerCase();
+                    const phone = (i.phone || '').toLowerCase();
+                    const email = (i.email || '').toLowerCase();
+                    const orderId = (i.order_id || '').toLowerCase();
+                    return name.includes(searchInput) || phone.includes(searchInput) ||
+                        email.includes(searchInput) || orderId.includes(searchInput);
+                });
+            }
+
+            if (usersData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Không tìm thấy dữ liệu người dùng</td></tr>';
+                return;
+            }
+
+            usersData.forEach((user, index) => {
+                const tr = document.createElement('tr');
+                const rowCreatedAt = user.CreatedAt || user.created_at || user['Created time'];
+                const timeString = new Date(rowCreatedAt).toLocaleString('vi-VN');
+
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td style="font-weight: 500">${user.name || '-'}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>${user.email || '-'}</td>
+                    <td>${user.order_id || '-'}</td>
+                    <td>${timeString}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function renderCharts() {
+            // Destroy existing charts to overwrite
+            Object.values(charts).forEach(c => c.destroy());
+
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            // 1. Pie Chart: Status Distribution
+            const statusCounts = {
+                'INVITED': filteredData.filter(i => i.status === 'INVITED').length,
+                'PLAYER': filteredData.filter(i => i.status === 'PLAYER').length,
+                'EXPIRED': filteredData.filter(i => i.status === 'EXPIRED').length
+            };
+
+            charts.pie = new Chart(document.getElementById('statusPieChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['INVITED', 'PLAYER', 'EXPIRED'],
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: ['#3b82f6', '#22c55e', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { color: textColor } } }
+                }
+            });
+
+            // 2. Bar Chart: Win vs No Win
+            const playerRecords = filteredData.filter(i => i.status === "PLAYER");
+            const winCount = playerRecords.filter(i => i.prize_id && i.prize_id !== 'null').length;
+            const noWinCount = playerRecords.length - winCount;
+
+            charts.bar = new Chart(document.getElementById('winBarChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Trúng thưởng', 'Không trúng'],
+                    datasets: [{
+                        label: 'Số lượt',
+                        data: [winCount, noWinCount],
+                        backgroundColor: ['#f97316', '#cbd5e1'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                }
+            });
+
+            // 3. Line Chart: Activity over time
+            const playsByDay = {};
+
+            playerRecords.forEach(i => {
+                const createdAt = i.CreatedAt || i.created_at || i['Created time'];
+                const day = new Date(createdAt).toLocaleDateString('vi-VN');
+                playsByDay[day] = (playsByDay[day] || 0) + 1;
+            });
+
+            // Sort days
+            const sortedDays = Object.keys(playsByDay).sort((a, b) => {
+                return new Date(a.split('/').reverse().join('-')) - new Date(b.split('/').reverse().join('-'));
+            });
+
+            charts.line = new Chart(document.getElementById('activityLineChart'), {
+                type: 'line',
+                data: {
+                    labels: sortedDays,
+                    datasets: [{
+                        label: 'Số lượt chơi',
+                        data: sortedDays.map(d => playsByDay[d]),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: isDark ? '#334155' : '#f1f5f9' }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                }
+            });
+        }
+
+        /**
+         * UTILS & ACTIONS
+         */
+
+        function switchTab(tabId, element) {
+            // Remove active class from all nav links
+            document.querySelectorAll('aside .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            // Add active class to clicked link
+            if (element) {
+                element.classList.add('active');
+            }
+
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            const target = current === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', target);
+
+            const icon = document.getElementById('theme-icon');
+            icon.className = target === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+
+            renderCharts(); // Re-render charts for colors
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.borderLeftColor = isError ? '#ef4444' : '#4f46e5';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+
+        function exportCSV() {
+            if (filteredData.length === 0) {
+                showToast("Không có dữ liệu để xuất!", true);
+                return;
+            }
+
+            const headers = Object.keys(filteredData[0]).join(',');
+            const rows = filteredData.map(item => {
+                return Object.values(item).map(val => `"${val}"`).join(',');
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows.join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `report_minigame_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Đã tải xuống file CSV!");
+        }
+    </script>
+</body>
+
+</html>
