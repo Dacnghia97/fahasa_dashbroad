@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini Game Dashboard - Report</title>
+    <link rel="icon" href="favicon.png" type="image/png">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Google Fonts: Inter -->
@@ -296,7 +297,7 @@
                 padding: 2rem 0.5rem;
             }
 
-            .logo span,
+            .logo img,
             .nav-link span {
                 display: none;
             }
@@ -482,8 +483,7 @@
     <!-- Sidebar -->
     <aside>
         <div class="logo">
-            <i class="fas fa-gamepad"></i>
-            <span>GameDash</span>
+            <img src="logo.png" alt="CDP Logo" style="height: 40px; width: auto;">
         </div>
         <nav>
             <a href="#" class="nav-link active" onclick="switchTab('tab-thong-ke', this)">
@@ -590,17 +590,23 @@
 
             <!-- Charts Grid -->
             <section class="charts-container">
-                <div class="chart-wrapper">
-                    <div class="chart-header">Phân bổ Trạng thái</div>
-                    <canvas id="statusPieChart"></canvas>
+                <div class="chart-wrapper" style="display: flex; flex-direction: column; align-items: center;">
+                    <div class="chart-header" style="width: 100%;">Phân bổ Trạng thái</div>
+                    <div style="position: relative; height: 260px; width: 100%; max-width: 400px;">
+                        <canvas id="statusPieChart"></canvas>
+                    </div>
                 </div>
-                <div class="chart-wrapper">
-                    <div class="chart-header">Tỷ lệ Trúng vs Không Trúng</div>
-                    <canvas id="winBarChart"></canvas>
+                <div class="chart-wrapper" style="display: flex; flex-direction: column; align-items: center;">
+                    <div class="chart-header" style="width: 100%;">Tỷ lệ Trúng vs Không Trúng</div>
+                    <div style="position: relative; height: 260px; width: 100%;">
+                        <canvas id="winBarChart"></canvas>
+                    </div>
                 </div>
                 <div class="chart-wrapper full-width">
                     <div class="chart-header">Số lượt chơi theo ngày</div>
-                    <canvas id="activityLineChart"></canvas>
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="activityLineChart"></canvas>
+                    </div>
                 </div>
             </section>
         </div>
@@ -948,6 +954,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { color: textColor } } }
                 }
             });
@@ -970,6 +977,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         y: { beginAtZero: true, grid: { display: false }, ticks: { color: textColor } },
                         x: { grid: { display: false }, ticks: { color: textColor } }
@@ -1006,6 +1014,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         y: { beginAtZero: true, grid: { color: isDark ? '#334155' : '#f1f5f9' }, ticks: { color: textColor } },
                         x: { grid: { display: false }, ticks: { color: textColor } }
