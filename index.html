@@ -468,6 +468,59 @@
             outline: none;
             transition: var(--transition);
         }
+
+        /* Pagination Styling */
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: var(--transition);
+            min-width: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        [data-theme="dark"] .page-btn:disabled {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .pagination span {
+            color: var(--text-secondary);
+            padding: 0 0.2rem;
+        }
     </style>
 </head>
 
@@ -614,7 +667,7 @@
         <div id="tab-nguoi-dung" class="tab-content">
             <div class="table-container">
                 <input type="text" id="user-search" class="user-search" placeholder="Tìm kiếm SĐT, Họ tên, Mã ĐH..."
-                    onkeyup="renderUserTable()">
+                    onkeyup="renderUserTable(1)">
                 <table class="user-table">
                     <thead>
                         <tr>
@@ -629,6 +682,9 @@
                     <tbody id="user-table-body">
                     </tbody>
                 </table>
+                <div id="user-pagination" class="pagination" style="display: none;">
+                    <!-- Pagination buttons injected by JS -->
+                </div>
             </div>
         </div>
 
@@ -642,7 +698,7 @@
             <div class="table-container" style="margin-top: 2rem;">
                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Danh sách người trúng thưởng</h3>
                 <input type="text" id="gift-search" class="user-search" placeholder="Tìm kiếm SĐT, Họ tên, Quà tặng..."
-                    onkeyup="renderGiftData()">
+                    onkeyup="renderGiftData(1)">
                 <table class="user-table">
                     <thead>
                         <tr>
@@ -657,6 +713,9 @@
                         <!-- Rows injected by JS -->
                     </tbody>
                 </table>
+                <div id="gift-pagination" class="pagination" style="display: none;">
+                    <!-- Pagination buttons injected by JS -->
+                </div>
             </div>
         </div>
     </main>
@@ -670,6 +729,12 @@
         let rawData = [];
         let filteredData = [];
         let charts = {};
+
+        let currentUserPage = 1;
+        const USER_PAGE_SIZE = 20;
+
+        let currentGiftPage = 1;
+        const GIFT_PAGE_SIZE = 20;
 
         /**
          * INITIALIZATION
@@ -788,7 +853,8 @@
             "Máy Tính Casio FX580": { total: 6, icon: "fa-calculator", bg: "bg-indigo", match: ["casio", "máy tính"] }
         };
 
-        function renderGiftData() {
+        function renderGiftData(page = 1) {
+            currentGiftPage = page;
             const giftStats = {
                 "5.000 F-point": 0,
                 "10.000 F-point": 0,
@@ -847,6 +913,7 @@
 
             const tableBody = document.getElementById('gift-table-body');
             const searchInput = document.getElementById('gift-search').value.toLowerCase();
+            const paginationContainer = document.getElementById('gift-pagination');
 
             let displayWinners = [...winners];
             if (searchInput) {
@@ -867,15 +934,23 @@
             tableBody.innerHTML = '';
             if (displayWinners.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">Không tìm thấy dữ liệu trúng thưởng</td></tr>';
+                if (paginationContainer) paginationContainer.style.display = 'none';
                 return;
             }
 
-            displayWinners.forEach((user, index) => {
+            const totalPages = Math.ceil(displayWinners.length / GIFT_PAGE_SIZE);
+            if (currentGiftPage > totalPages) currentGiftPage = totalPages || 1;
+
+            const startIndex = (currentGiftPage - 1) * GIFT_PAGE_SIZE;
+            const endIndex = startIndex + GIFT_PAGE_SIZE;
+            const paginatedData = displayWinners.slice(startIndex, endIndex);
+
+            paginatedData.forEach((user, index) => {
                 const rowCreatedAt = user.CreatedAt || user.created_at || user['Created time'];
                 const timeString = new Date(rowCreatedAt).toLocaleString('vi-VN');
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${index + 1}</td>
+                    <td>${startIndex + index + 1}</td>
                     <td style="font-weight: 500">${user.name || '-'}</td>
                     <td>${user.phone || '-'}</td>
                     <td style="color: var(--primary-color); font-weight: 500;">${user.normalized_prize || user.prize || '-'}</td>
@@ -883,11 +958,82 @@
                 `;
                 tableBody.appendChild(tr);
             });
+
+            renderGiftPaginationControls(totalPages);
         }
 
-        function renderUserTable() {
+        function renderGiftPaginationControls(totalPages) {
+            const paginationContainer = document.getElementById('gift-pagination');
+            if (!paginationContainer) return;
+
+            if (totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+
+            paginationContainer.style.display = 'flex';
+            paginationContainer.innerHTML = '';
+
+            // Prev Button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.disabled = currentGiftPage === 1;
+            prevBtn.onclick = () => renderGiftData(currentGiftPage - 1);
+            paginationContainer.appendChild(prevBtn);
+
+            // Page Numbers
+            let startPage = Math.max(1, currentGiftPage - 2);
+            let endPage = Math.min(totalPages, currentGiftPage + 2);
+
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.className = 'page-btn';
+                firstBtn.innerText = '1';
+                firstBtn.onclick = () => renderGiftData(1);
+                paginationContainer.appendChild(firstBtn);
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.innerText = '...';
+                    paginationContainer.appendChild(dots);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentGiftPage ? 'active' : ''}`;
+                pageBtn.innerText = i;
+                pageBtn.onclick = () => renderGiftData(i);
+                paginationContainer.appendChild(pageBtn);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.innerText = '...';
+                    paginationContainer.appendChild(dots);
+                }
+                const lastBtn = document.createElement('button');
+                lastBtn.className = 'page-btn';
+                lastBtn.innerText = totalPages;
+                lastBtn.onclick = () => renderGiftData(totalPages);
+                paginationContainer.appendChild(lastBtn);
+            }
+
+            // Next Button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.disabled = currentGiftPage === totalPages;
+            nextBtn.onclick = () => renderGiftData(currentGiftPage + 1);
+            paginationContainer.appendChild(nextBtn);
+        }
+
+        function renderUserTable(page = 1) {
+            currentUserPage = page;
             const tableBody = document.getElementById('user-table-body');
             const searchInput = document.getElementById('user-search').value.toLowerCase();
+            const paginationContainer = document.getElementById('user-pagination');
 
             tableBody.innerHTML = '';
 
@@ -908,16 +1054,24 @@
 
             if (usersData.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Không tìm thấy dữ liệu người dùng</td></tr>';
+                if (paginationContainer) paginationContainer.style.display = 'none';
                 return;
             }
 
-            usersData.forEach((user, index) => {
+            const totalPages = Math.ceil(usersData.length / USER_PAGE_SIZE);
+            if (currentUserPage > totalPages) currentUserPage = totalPages;
+
+            const startIndex = (currentUserPage - 1) * USER_PAGE_SIZE;
+            const endIndex = startIndex + USER_PAGE_SIZE;
+            const paginatedData = usersData.slice(startIndex, endIndex);
+
+            paginatedData.forEach((user, index) => {
                 const tr = document.createElement('tr');
                 const rowCreatedAt = user.CreatedAt || user.created_at || user['Created time'];
                 const timeString = new Date(rowCreatedAt).toLocaleString('vi-VN');
 
                 tr.innerHTML = `
-                    <td>${index + 1}</td>
+                    <td>${startIndex + index + 1}</td>
                     <td style="font-weight: 500">${user.name || '-'}</td>
                     <td>${user.phone || '-'}</td>
                     <td>${user.email || '-'}</td>
@@ -926,6 +1080,75 @@
                 `;
                 tableBody.appendChild(tr);
             });
+
+            renderPaginationControls(totalPages);
+        }
+
+        function renderPaginationControls(totalPages) {
+            const paginationContainer = document.getElementById('user-pagination');
+            if (!paginationContainer) return;
+
+            if (totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+
+            paginationContainer.style.display = 'flex';
+            paginationContainer.innerHTML = '';
+
+            // Prev Button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.disabled = currentUserPage === 1;
+            prevBtn.onclick = () => renderUserTable(currentUserPage - 1);
+            paginationContainer.appendChild(prevBtn);
+
+            // Page Numbers
+            let startPage = Math.max(1, currentUserPage - 2);
+            let endPage = Math.min(totalPages, currentUserPage + 2);
+
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.className = 'page-btn';
+                firstBtn.innerText = '1';
+                firstBtn.onclick = () => renderUserTable(1);
+                paginationContainer.appendChild(firstBtn);
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.innerText = '...';
+                    paginationContainer.appendChild(dots);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentUserPage ? 'active' : ''}`;
+                pageBtn.innerText = i;
+                pageBtn.onclick = () => renderUserTable(i);
+                paginationContainer.appendChild(pageBtn);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.innerText = '...';
+                    paginationContainer.appendChild(dots);
+                }
+                const lastBtn = document.createElement('button');
+                lastBtn.className = 'page-btn';
+                lastBtn.innerText = totalPages;
+                lastBtn.onclick = () => renderUserTable(totalPages);
+                paginationContainer.appendChild(lastBtn);
+            }
+
+            // Next Button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.disabled = currentUserPage === totalPages;
+            nextBtn.onclick = () => renderUserTable(currentUserPage + 1);
+            paginationContainer.appendChild(nextBtn);
         }
 
         function renderCharts() {
