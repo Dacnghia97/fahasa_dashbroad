@@ -724,8 +724,8 @@
         /**
          * CONFIGURATION
          */
-        const API_URL = "https://nocodb.smax.in/api/v2/tables/mkuczx2ud6zitcr/records?offset=0&limit=1000&viewId=vwwpbk3nxxbb38yc";
-        const API_TOKEN = "9XcWdwwaxAznbxKwmx-wcwQI81K9vC3JD7GtK0ot";
+        const API_URL = "/api/data";
+        // API_TOKEN is now handled securely on the server-side
         let rawData = [];
         let filteredData = [];
         let charts = {};
@@ -764,10 +764,8 @@
          */
         async function fetchData() {
             try {
-                const response = await fetch(API_URL, {
-                    headers: { 'xc-token': API_TOKEN }
-                });
-                if (!response.ok) throw new Error('Network response was not ok');
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
                 const result = await response.json();
 
                 // Loại bỏ các bản ghi trống, chỉ thống kê từ ID có dữ liệu cơ bản đầy đủ
